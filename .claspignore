@@ -1,0 +1,13 @@
+# Ignore backup and temporary files
+core/*.gs
+core/*.bak*
+core/*.tmp*
+core/*_backup*
+tools/*.gs
+tools/*.bak*
+tools/*.tmp*
+tools/*_backup*
+**/backup*
+**/*.backup
+**/*.bak*
+**/*.tmp*

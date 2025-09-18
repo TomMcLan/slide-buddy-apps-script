@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Apps Script
+.clasp.json
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*~
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+
+# Logs
+logs
+*.log
+
+# Temporary files
+temp_*
+fix_*

@@ -1,0 +1,390 @@
+<script>
+/**
+ * Slide Bro JavaScript - Converted from React to vanilla JS
+ * Removes all mock data and implements real functionality
+ */
+
+class SlideBroApp {
+  constructor() {
+    this.viewMode = 'actions'; // 'actions' or 'chat'
+    this.messages = [];
+    this.isProcessing = false;
+    
+    this.initializeElements();
+    this.bindEvents();
+  }
+
+  initializeElements() {
+    // Get DOM elements
+    this.backBtn = document.getElementById('backBtn');
+    this.sectionTitle = document.getElementById('sectionTitle');
+    this.actionsView = document.getElementById('actionsView');
+    this.chatView = document.getElementById('chatView');
+    this.messagesContainer = document.getElementById('messagesContainer');
+    this.userInput = document.getElementById('userInput');
+    this.sendBtn = document.getElementById('sendBtn');
+    
+    // Action buttons
+    this.actionItems = document.querySelectorAll('.action-item');
+  }
+
+  bindEvents() {
+    // Back button
+    this.backBtn.addEventListener('click', () => this.switchToActionsView());
+    
+    // Action items
+    this.actionItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const action = item.dataset.action;
+        this.handleActionClick(action);
+      });
+    });
+    
+    // Send button and input
+    this.sendBtn.addEventListener('click', () => this.handleSendMessage());
+    this.userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !this.isProcessing) {
+        this.handleSendMessage();
+      }
+    });
+    
+    // Input validation
+    this.userInput.addEventListener('input', () => {
+      this.sendBtn.disabled = !this.userInput.value.trim() || this.isProcessing;
+    });
+  }
+
+  switchToActionsView() {
+    this.viewMode = 'actions';
+    this.actionsView.style.display = 'block';
+    this.chatView.style.display = 'none';
+    this.backBtn.style.display = 'none';
+    this.sectionTitle.textContent = 'Quick Actions';
+    this.userInput.placeholder = 'Enter a prompt here';
+  }
+
+  switchToChatView() {
+    this.viewMode = 'chat';
+    this.actionsView.style.display = 'none';
+    this.chatView.style.display = 'block';
+    this.backBtn.style.display = 'block';
+    this.sectionTitle.textContent = 'Conversation';
+    this.userInput.placeholder = 'Ask for more changes...';
+    this.renderMessages();
+  }
+
+  async handleActionClick(actionType) {
+    // Create user message
+    const actionTitles = {
+      translate: 'Translate slide deck',
+      findReplace: 'Change one term in all slides',
+      changeTone: 'Change the tone of the entire slide',
+      undo: 'Undo all changes'
+    };
+
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: actionTitles[actionType],
+      timestamp: new Date()
+    };
+
+    this.messages = [userMessage];
+    this.switchToChatView();
+
+    // Process action with real backend (no mock data)
+    await this.processAction(actionType);
+  }
+
+  async processAction(actionType) {
+    this.isProcessing = true;
+    this.updateInputState();
+
+    // Create AI processing message
+    const aiMessage = {
+      id: (Date.now() + 1).toString(),
+      type: 'ai',
+      content: `Processing your request...`,
+      timestamp: new Date(),
+      status: 'processing'
+    };
+
+    this.messages.push(aiMessage);
+    this.renderMessages();
+
+    try {
+      // Call real Google Apps Script backend (no mock data)
+      const result = await this.callBackend('handleActionClick', [actionType]);
+      
+      if (result.success) {
+        // Update message with real results
+        const messageIndex = this.messages.findIndex(m => m.id === aiMessage.id);
+        if (messageIndex !== -1) {
+          this.messages[messageIndex] = {
+            ...this.messages[messageIndex],
+            content: result.response || 'Changes have been applied to your presentation.',
+            status: 'applied',
+            appliedChanges: result.appliedChanges
+          };
+        }
+      } else {
+        // Handle error
+        const messageIndex = this.messages.findIndex(m => m.id === aiMessage.id);
+        if (messageIndex !== -1) {
+          this.messages[messageIndex] = {
+            ...this.messages[messageIndex],
+            content: `Error: ${result.error}`,
+            status: 'error'
+          };
+        }
+      }
+    } catch (error) {
+      // Handle network/script errors
+      const messageIndex = this.messages.findIndex(m => m.id === aiMessage.id);
+      if (messageIndex !== -1) {
+        this.messages[messageIndex] = {
+          ...this.messages[messageIndex],
+          content: `Error: ${error.message}`,
+          status: 'error'
+        };
+      }
+    }
+
+    this.isProcessing = false;
+    this.updateInputState();
+    this.renderMessages();
+  }
+
+  async handleSendMessage() {
+    const message = this.userInput.value.trim();
+    if (!message || this.isProcessing) return;
+
+    // Create user message
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: message,
+      timestamp: new Date()
+    };
+
+    this.messages.push(userMessage);
+    this.userInput.value = '';
+    this.switchToChatView();
+
+    // Process with real AI (no mock data)
+    await this.processUserMessage(message);
+  }
+
+  async processUserMessage(message) {
+    this.isProcessing = true;
+    this.updateInputState();
+
+    // Create AI processing message
+    const aiMessage = {
+      id: (Date.now() + 1).toString(),
+      type: 'ai',
+      content: 'Processing your request...',
+      timestamp: new Date(),
+      status: 'processing'
+    };
+
+    this.messages.push(aiMessage);
+    this.renderMessages();
+
+    try {
+      // Call real backend AI processing (no mock data)
+      const result = await this.callBackend('processUserMessage', [message]);
+      
+      if (result.success) {
+        // Update with real AI response
+        const messageIndex = this.messages.findIndex(m => m.id === aiMessage.id);
+        if (messageIndex !== -1) {
+          this.messages[messageIndex] = {
+            ...this.messages[messageIndex],
+            content: result.response,
+            status: 'applied',
+            appliedChanges: result.appliedChanges
+          };
+        }
+      } else {
+        // Handle error
+        const messageIndex = this.messages.findIndex(m => m.id === aiMessage.id);
+        if (messageIndex !== -1) {
+          this.messages[messageIndex] = {
+            ...this.messages[messageIndex],
+            content: `Error: ${result.error}`,
+            status: 'error'
+          };
+        }
+      }
+    } catch (error) {
+      // Handle errors
+      const messageIndex = this.messages.findIndex(m => m.id === aiMessage.id);
+      if (messageIndex !== -1) {
+        this.messages[messageIndex] = {
+          ...this.messages[messageIndex],
+          content: `Error: ${error.message}`,
+          status: 'error'
+        };
+      }
+    }
+
+    this.isProcessing = false;
+    this.updateInputState();
+    this.renderMessages();
+  }
+
+  async handleUndo(messageId) {
+    try {
+      // Call real undo functionality (no mock data)
+      const result = await this.callBackend('handleUndo', []);
+      
+      if (result.success) {
+        // Update message to show undo completed
+        const messageIndex = this.messages.findIndex(m => m.id === messageId);
+        if (messageIndex !== -1) {
+          this.messages[messageIndex].content += ' The changes have been undone.';
+          this.messages[messageIndex].appliedChanges = {
+            ...this.messages[messageIndex].appliedChanges,
+            title: 'Changes Undone',
+            description: 'All modifications have been reverted to the original state'
+          };
+        }
+        
+        // Remove message after delay
+        setTimeout(() => {
+          this.messages = this.messages.filter(m => m.id !== messageId);
+          this.renderMessages();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Undo failed:', error);
+    }
+    
+    this.renderMessages();
+  }
+
+  renderMessages() {
+    if (this.messages.length === 0) {
+      this.messagesContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-message">Start a conversation about your presentation</div>
+        </div>
+      `;
+      return;
+    }
+
+    this.messagesContainer.innerHTML = this.messages.map(message => 
+      this.renderMessage(message)
+    ).join('');
+
+    // Bind undo buttons
+    this.messagesContainer.querySelectorAll('.undo-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const messageId = e.target.closest('.undo-btn').dataset.messageId;
+        this.handleUndo(messageId);
+      });
+    });
+
+    // Scroll to bottom
+    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+  }
+
+  renderMessage(message) {
+    const isUser = message.type === 'user';
+    const avatarClass = isUser ? 'user-avatar' : 'ai-avatar';
+    
+    let statusContent = '';
+    if (message.status === 'processing') {
+      statusContent = `
+        <div class="processing-indicator">
+          <div class="spinner"></div>
+          Applying changes...
+        </div>
+      `;
+    }
+
+    let appliedChangesContent = '';
+    if (message.type === 'ai' && message.appliedChanges && message.status === 'applied') {
+      appliedChangesContent = `
+        <div class="applied-changes">
+          <div class="changes-header">
+            <div class="changes-info">
+              <div class="changes-title-row">
+                <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+                <div class="changes-title">${message.appliedChanges.title}</div>
+              </div>
+              <div class="changes-description">${message.appliedChanges.description}</div>
+            </div>
+            ${message.appliedChanges.changesCount ? `
+              <div class="changes-badge">${message.appliedChanges.changesCount} changes</div>
+            ` : ''}
+          </div>
+          <button class="undo-btn" data-message-id="${message.id}">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            Undo Changes
+          </button>
+        </div>
+      `;
+    }
+
+    let feedbackContent = '';
+    if (message.type === 'ai' && message.status === 'applied') {
+      feedbackContent = `
+        <div class="feedback-buttons">
+          <button class="feedback-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M7 10v12"/>
+              <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h3.73a2 2 0 0 1 1.92 2.56z"/>
+            </svg>
+          </button>
+          <button class="feedback-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 14V2"/>
+              <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h-3.73a2 2 0 0 1-1.92-2.56z"/>
+            </svg>
+          </button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="message">
+        <div class="message-content">
+          <div class="message-avatar ${avatarClass}"></div>
+          <div class="message-body">
+            <div class="message-text">${message.content}</div>
+            ${statusContent}
+            ${appliedChangesContent}
+            ${feedbackContent}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  updateInputState() {
+    this.sendBtn.disabled = !this.userInput.value.trim() || this.isProcessing;
+  }
+
+  // Real backend communication (replaces all mock data)
+  async callBackend(functionName, parameters = []) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        [functionName](...parameters);
+    });
+  }
+}
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  window.slideBroApp = new SlideBroApp();
+});
+</script>

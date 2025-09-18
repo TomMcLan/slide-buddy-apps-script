@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Slide Bro</title>
+  <?!= include('styles'); ?>
+</head>
+<body>
+  <div id="app" class="sidebar-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <button id="backBtn" class="back-btn" style="display: none;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+        <div class="app-title">Slide Bro</div>
+      </div>
+      <button class="close-btn">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m18 6-12 12"/>
+          <path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <div class="section-title" id="sectionTitle">Quick Actions</div>
+      <svg class="icon chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Actions View -->
+      <div id="actionsView" class="actions-view">
+        <div class="action-item" data-action="translate">
+          <div class="action-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+          </div>
+          <div class="action-content">
+            <div class="action-title">Translate slide deck</div>
+            <div class="action-description">to your preferred language</div>
+          </div>
+        </div>
+
+        <div class="action-item" data-action="findReplace">
+          <div class="action-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <div class="action-content">
+            <div class="action-title">Change one term in all slides</div>
+            <div class="action-description">replace specific words across presentation</div>
+          </div>
+        </div>
+
+        <div class="action-item" data-action="changeTone">
+          <div class="action-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/>
+              <path d="M4 7h16"/>
+              <path d="M4 7v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7"/>
+              <path d="M8 11v4"/>
+              <path d="M12 11v4"/>
+              <path d="M16 11v4"/>
+            </svg>
+          </div>
+          <div class="action-content">
+            <div class="action-title">Change the tone of the entire slide</div>
+            <div class="action-description">adjust formality and style throughout</div>
+          </div>
+        </div>
+
+        <div class="action-item" data-action="undo">
+          <div class="action-icon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+          </div>
+          <div class="action-content">
+            <div class="action-title">Undo all changes</div>
+            <div class="action-description">revert to original presentation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat View -->
+      <div id="chatView" class="chat-view" style="display: none;">
+        <div class="messages-container" id="messagesContainer">
+          <div class="empty-state">
+            <div class="empty-message">Start a conversation about your presentation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="input-container">
+        <input 
+          type="text" 
+          id="userInput" 
+          class="message-input"
+          placeholder="Enter a prompt here"
+        >
+        <button id="sendBtn" class="send-btn" disabled>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m22 2-7 20-4-9-9-4Z"/>
+            <path d="M22 2 11 13"/>
+          </svg>
+        </button>
+      </div>
+      <div class="disclaimer">
+        Slide Bro can make mistakes. Check important info.
+      </div>
+    </div>
+  </div>
+
+  <?!= include('javascript'); ?>
+</body>
+</html>
