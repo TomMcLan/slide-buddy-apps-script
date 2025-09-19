@@ -21,10 +21,22 @@
     "https://www.googleapis.com/auth/drive.readonly",
     "https://www.googleapis.com/auth/script.external_request",
     "https://www.googleapis.com/auth/script.container.ui",
-    "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/script.storage"
+    "https://www.googleapis.com/auth/userinfo.email"
   ],
   "urlFetchWhitelist": [
     "https://generativelanguage.googleapis.com/"
-  ]
+  ],
+  "addOns": {
+    "common": {
+      "name": "Slide Buddy 2.0",
+      "logoUrl": "https://ssl.gstatic.com/docs/script/images/logo/script-64.png",
+      "useLocaleFromApp": true
+    },
+    "slides": {
+      "homepageTrigger": {
+        "runFunction": "openSlideBuddy",
+        "enabled": true
+      }
+    }
+  }
 }

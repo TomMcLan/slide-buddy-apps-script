@@ -6,7 +6,8 @@
 class AIManager {
   constructor() {
     this.geminiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-    this.geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    // Updated to use Gemini 2.5 Flash
+    this.geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
     
     if (!this.geminiKey) {
       throw new Error('Gemini API key not found. Please set GEMINI_API_KEY in Script Properties.');
@@ -14,9 +15,19 @@ class AIManager {
   }
 
   /**
-   * Call Gemini API with proper error handling
+   * Call Gemini API with proper error handling and optimization
    */
   async callGemini(prompt, maxTokens = 500) {
+    // OPTIMIZATION: Simple request caching to avoid repeat API calls
+    const promptHash = this.hashString(prompt.substring(0, 100));
+    const cacheKey = `gemini_cache_${promptHash}`;
+    
+    // Check cache for recent identical requests (5 minute window)
+    const cached = CacheService.getScriptCache().get(cacheKey);
+    if (cached) {
+      console.log('Cache hit for Gemini request');
+      return cached;
+    }
     try {
       const payload = {
         contents: [{
@@ -41,12 +52,21 @@ class AIManager {
       });
 
       const data = JSON.parse(response.getContentText());
+      
+      // Debug logging for response structure
+      console.log('Gemini API response structure:', JSON.stringify(data, null, 2));
 
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        return data.candidates[0].content.parts[0].text;
+      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        const aiResponse = data.candidates[0].content.parts[0].text;
+        
+        // Cache successful response for 5 minutes
+        CacheService.getScriptCache().put(cacheKey, aiResponse, 300);
+        
+        return aiResponse;
       }
 
-      throw new Error('No response from Gemini API');
+      // More detailed error with actual response
+      throw new Error(`No valid response from Gemini API. Response: ${JSON.stringify(data)}`);
     } catch (error) {
       console.error('Gemini API Error:', error);
       throw new Error(`AI processing failed: ${error.message}`);
@@ -95,7 +115,7 @@ class AIManager {
       "intent": "TRANSLATE",
       "confidence": 0.9,
       "parameters": {
-        "targetLanguage": "Spanish",
+        "targetLanguage": null,
         "scope": "selected_text",
         "contextReference": "title text on current slide"
       },
@@ -122,7 +142,10 @@ class AIManager {
    * Execute classified intent (replaces mock execution)
    */
   async executeIntent(intent, context) {
-    // Simplified execution without snapshot system
+    const revertSystem = new RevertSystem();
+    
+    // Create snapshot before any changes
+    const snapshotId = revertSystem.createSnapshot(intent.intent, `User request: ${intent.intent}`);
     
     try {
       let result;
@@ -131,7 +154,7 @@ class AIManager {
         case 'TRANSLATE':
           const translationEngine = new TranslationEngine();
           result = await translationEngine.translatePresentation(
-            intent.parameters.targetLanguage || 'Spanish'
+            intent.parameters.targetLanguage || null
           );
           break;
           
@@ -159,11 +182,7 @@ class AIManager {
           break;
           
         case 'UNDO':
-          result = {
-            message: "Undo Guide: Press Ctrl+Z (or Cmd+Z on Mac) in Google Slides to revert changes. You can also use Edit → Undo from the menu. Google Slides keeps full edit history for multiple undos.",
-            changes: null,
-            canRevert: false
-          };
+          result = revertSystem.revertLastChange();
           break;
           
         case 'UNCLEAR':
@@ -182,11 +201,15 @@ class AIManager {
         success: true,
         message: result.message || 'Changes have been applied successfully.',
         changes: result.changes,
-        canRevert: false
+        canRevert: result.canRevert !== false,
+        snapshotId: snapshotId
       };
       
     } catch (error) {
-      // Note: Error occurred during execution
+      // Revert snapshot if execution failed
+      if (snapshotId) {
+        revertSystem.revertToSnapshot(snapshotId);
+      }
       
       throw error;
     }
@@ -205,5 +228,68 @@ class AIManager {
     };
     
     return templates[intent.intent] || 'Changes have been applied successfully!';
+  }
+  
+  /**
+   * Simple hash function for caching
+   */
+  hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString();
+  }
+
+  /**
+   * Alternative Gemini calling method using the pattern that works in diagnostics
+   */
+  callGeminiWithThinking(prompt, maxTokens = 500) {
+    try {
+      const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+      
+      if (!apiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+      
+      const payload = {
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: maxTokens
+        }
+      };
+      
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        payload: JSON.stringify(payload)
+      };
+      
+      const response = UrlFetchApp.fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        options
+      );
+      
+      if (response.getResponseCode() === 200) {
+        const data = JSON.parse(response.getContentText());
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'So sorry we are unable to process this request.';
+      } else {
+        throw new Error(`API Error: ${response.getResponseCode()}: ${response.getContentText()}`);
+      }
+      
+    } catch (error) {
+      console.error('Gemini API Error in callGeminiWithThinking:', error);
+      throw new Error(`Translation failed: ${error.message}`);
+    }
   }
 }

@@ -141,7 +141,7 @@ class RevertSystem {
       
       const slideState = {
         slideId: slide.getObjectId(),
-        background: this.captureBackground(slide),
+        background: this.captureSlideBackground(slide),
         elements: []
       };
       
@@ -245,6 +245,77 @@ class RevertSystem {
   }
 
   /**
+   * Capture image state for preservation
+   */
+  captureImageState(image, baseState) {
+    try {
+      const imageState = {
+        ...baseState,
+        imageType: 'IMAGE',
+        properties: {
+          // Image properties are mostly read-only in Google Slides API
+          // We can capture basic transform and position info
+          transform: image.getTransform(),
+          title: image.getTitle() || '',
+          description: image.getDescription() || ''
+        }
+      };
+      
+      return imageState;
+      
+    } catch (error) {
+      console.error('Image state capture failed:', error);
+      return baseState;
+    }
+  }
+
+  /**
+   * Capture table state for preservation
+   */
+  captureTableState(table, baseState) {
+    try {
+      const tableState = {
+        ...baseState,
+        tableType: 'TABLE',
+        properties: {
+          rows: table.getNumRows(),
+          columns: table.getNumColumns(),
+          // Note: Table content is complex to capture and restore
+          // For now, we'll just preserve basic structure
+        }
+      };
+      
+      return tableState;
+      
+    } catch (error) {
+      console.error('Table state capture failed:', error);
+      return baseState;
+    }
+  }
+
+  /**
+   * Capture line state for preservation
+   */
+  captureLineState(line, baseState) {
+    try {
+      const lineState = {
+        ...baseState,
+        lineType: 'LINE',
+        properties: {
+          lineCategory: line.getLineCategory(),
+          // Line properties are mostly styling which is harder to capture
+        }
+      };
+      
+      return lineState;
+      
+    } catch (error) {
+      console.error('Line state capture failed:', error);
+      return baseState;
+    }
+  }
+
+  /**
    * Capture text style for preservation
    */
   captureTextStyle(textRange) {
@@ -314,7 +385,8 @@ class RevertSystem {
       
       state.slides.forEach(slideState => {
         try {
-          const slide = presentation.getSlide(slideState.slideId);
+          const slides = presentation.getSlides();
+          const slide = slides.find(s => s.getObjectId() === slideState.slideId);
           this.restoreSlideState(slide, slideState);
         } catch (error) {
           console.error(`Failed to restore slide ${slideState.slideId}:`, error);
@@ -475,5 +547,27 @@ class RevertSystem {
    */
   clearSnapshots() {
     PropertiesService.getScriptProperties().deleteProperty(this.sessionKey);
+  }
+
+  /**
+   * Capture slide background state (simplified for Google Slides API limitations)
+   */
+  captureSlideBackground(slide) {
+    try {
+      // Google Slides API has limited background access
+      // We'll store basic slide properties instead
+      return {
+        slideId: slide.getObjectId(),
+        slideIndex: slide.getObjectId(), // Simplified identifier
+        hasBackground: true // Placeholder - API limitations
+      };
+    } catch (error) {
+      console.error('Slide background capture failed:', error);
+      return {
+        slideId: slide.getObjectId(),
+        hasBackground: false,
+        error: error.message
+      };
+    }
   }
 }

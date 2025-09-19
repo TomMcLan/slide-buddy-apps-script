@@ -16,7 +16,6 @@ class SlideBroApp {
 
   initializeElements() {
     // Get DOM elements
-    this.backBtn = document.getElementById('backBtn');
     this.sectionTitle = document.getElementById('sectionTitle');
     this.actionsView = document.getElementById('actionsView');
     this.chatView = document.getElementById('chatView');
@@ -29,8 +28,6 @@ class SlideBroApp {
   }
 
   bindEvents() {
-    // Back button
-    this.backBtn.addEventListener('click', () => this.switchToActionsView());
     
     // Action items
     this.actionItems.forEach(item => {
@@ -58,7 +55,6 @@ class SlideBroApp {
     this.viewMode = 'actions';
     this.actionsView.style.display = 'block';
     this.chatView.style.display = 'none';
-    this.backBtn.style.display = 'none';
     this.sectionTitle.textContent = 'Quick Actions';
     this.userInput.placeholder = 'Enter a prompt here';
   }
@@ -67,7 +63,6 @@ class SlideBroApp {
     this.viewMode = 'chat';
     this.actionsView.style.display = 'none';
     this.chatView.style.display = 'block';
-    this.backBtn.style.display = 'block';
     this.sectionTitle.textContent = 'Conversation';
     this.userInput.placeholder = 'Ask for more changes...';
     this.renderMessages();
